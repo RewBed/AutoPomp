@@ -2,20 +2,21 @@
 
 // пин подключения сервы
 const int servoPin = 13;
+const int relePin = 12;
 
 // сервопривод
 ServoSmooth servo;
 
 int shots_count = 3;                          // количество рюмок
-int shots[7] = {2, 3, 4, 4, 5, 6, 7};         // адреса рюмок
-int shots_deg[7] = {180, 153, 126, 0, 0, 0, 0};  // углы для рюмок
+int shots[7] = {2, 3, 4, 5, 6, 7, 8};         // адреса рюмок
+int shots_deg[7] = {180, 151, 116, 80, 47, 18, 0};  // углы для рюмок
 
 bool shots_active[7] = {}; // рюмки в очереди
 bool shots_poured[7] = {}; // налитые рюмки
 
 bool filling_up = false; // идет процес заполнения
 
-int filling_up_time = 3000; // время налитя рюмки
+int filling_up_time = 1500; // время налитя рюмки
 int last_filling_time = 0;  // время последнего старта налива
 int filling_up_timeout = 1000; // задержка перед налитием
 int filling_up_index = 0;
@@ -35,11 +36,12 @@ void setup() {
   }
 
   // настройка серво
-  servo.attach(servoPin);
+  servo.attach(servoPin, 600, 2400);
   servo.setSpeed(10);         // ограничить скорость
   servo.setAccel(0);          // установить ускорение (разгон и торможение)
   servo.setAutoDetach(false); // вкл/выкл автоматического отключения (detach) при достижении угла. По умолч. вкл
 
+  pinMode(relePin, OUTPUT);
 }
 
 void loop() {
@@ -85,14 +87,19 @@ void loop() {
   if(filling_up == false) {
 
     // если текущая позиция активна и не налита то запускаем процесс налития
+
+    Serial.print(servo.getCurrentDeg());
+
     for (int i = 0; i < shots_count; i++) {
       if(shots_deg[i] == servo.getCurrentDeg() && shots_active[i] == true && shots_poured[i] == false) {
 
+        Serial.print("filling_up_timeout");
         delay(filling_up_timeout);
 
         filling_up = true;
         last_filling_time = timer;
         filling_up_index = i;
+        digitalWrite(relePin, HIGH);
       }
     }
 
@@ -105,8 +112,9 @@ void loop() {
         // если рюмка активна и не налита
         if(shots_active[i] == true && shots_poured[i] == false) {
           
+          Serial.print("move_timeout");
           delay(move_timeout);
-
+          
           // отправляем серво к ней
           servo.write(shots_deg[i]);
         }
@@ -123,11 +131,13 @@ void loop() {
 
       if(timer - last_filling_time >= filling_up_time) {
         shots_poured[filling_up_index] = true;
+        digitalWrite(relePin, LOW);
         filling_up = false;
       }
     }
     else {
       filling_up = false;
+      digitalWrite(relePin, LOW);
     }
 
   }
