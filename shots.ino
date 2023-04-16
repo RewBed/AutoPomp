@@ -7,8 +7,8 @@ const int relePin = 12;
 // сервопривод
 ServoSmooth servo;
 
-int shots_count = 3;                          // количество рюмок
-int shots[7] = {2, 3, 4, 5, 6, 7, 8};         // адреса рюмок
+int shots_count = 7;                                // количество рюмок
+int shots[7] = {2, 3, 4, 5, 6, 7, 8};               // адреса рюмок
 int shots_deg[7] = {180, 151, 116, 80, 47, 18, 0};  // углы для рюмок
 
 bool shots_active[7] = {}; // рюмки в очереди
